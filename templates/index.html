@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block nav_home %}active{% endblock %}
+
+{% block content %}
+<div class="container">
+    <header>
+        <h1>NetGuard Dashboard</h1>
+        <p class="subtitle">Advanced Network Traffic Analysis & Visualization</p>
+    </header>
+
+    <div class="card" id="uploadCard">
+        <div class="upload-area" id="dropZone">
+            <div class="upload-icon">📁</div>
+            <h3>Drag & Drop your PCAP file here</h3>
+            <p style="color: var(--text-secondary); margin: 1rem 0;">or</p>
+            <input type="file" id="fileInput" accept=".pcap,.pcapng,.cap">
+            <button class="btn" onclick="document.getElementById('fileInput').click()">Browse Files</button>
+        </div>
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Analyzing network traffic... This may take a moment.</p>
+        </div>
+    </div>
+
+    <div id="dashboard" class="dashboard-grid">
+        <!-- Summary Stats -->
+        <div class="card stat-card">
+            <div class="stat-value" id="packetCount">0</div>
+            <div class="stat-label">Total Packets</div>
+        </div>
+
+        <div class="card stat-card">
+            <div class="stat-value" id="maliciousCount" style="color: var(--danger-color)">0</div>
+            <div class="stat-label">Threats Detected</div>
+        </div>
+
+        <!-- Charts -->
+        <div class="card" style="grid-column: span 2;">
+            <h3>Protocol Distribution</h3>
+            <canvas id="protocolChart"></canvas>
+        </div>
+
+        <!-- Tables -->
+        <div class="card">
+            <h3>Top Source IPs</h3>
+            <table id="srcIpTable">
+                <thead>
+                    <tr>
+                        <th>IP Address</th>
+                        <th>Count</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <h3>Top Destination IPs</h3>
+            <table id="dstIpTable">
+                <thead>
+                    <tr>
+                        <th>IP Address</th>
+                        <th>Count</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <!-- Malicious Activity Feed -->
+        <div class="card" style="grid-column: span 2;">
+            <h3 style="color: var(--danger-color)">Security Alerts</h3>
+            <div id="alertsFeed"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const loading = document.getElementById('loading');
+    const dashboard = document.getElementById('dashboard');
+    const uploadCard = document.getElementById('uploadCard');
+
+    // Check for report ID in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const reportId = urlParams.get('report');
+
+    if (reportId) {
+        loadReport(reportId);
+    }
+
+    function loadReport(id) {
+        uploadCard.style.display = 'none';
+        dashboard.style.display = 'none'; // Hide until loaded
+
+        fetch(`/report/${id}`)
+            .then(r => r.json())
+            .then(data => {
+                updateDashboard(data);
+            });
+    }
+
+    // Drag and drop handlers
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = 'var(--accent-color)';
+        dropZone.style.background = 'rgba(56, 189, 248, 0.05)';
+    });
+
+    dropZone.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = 'var(--border-color)';
+        dropZone.style.background = 'transparent';
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = 'var(--border-color)';
+        dropZone.style.background = 'transparent';
+
+        if (e.dataTransfer.files.length) {
+            handleFile(e.dataTransfer.files[0]);
+        }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length) {
+            handleFile(e.target.files[0]);
+        }
+    });
+
+    function handleFile(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        // UI Update
+        document.querySelector('.upload-area').style.display = 'none';
+        loading.style.display = 'block';
+        dashboard.style.display = 'none';
+
+        fetch('/upload', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    resetUI();
+                    return;
+                }
+                // Redirect to view report to persist state
+                window.location.href = `/?report=${data.scan_id}`;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred during analysis.');
+                resetUI();
+            });
+    }
+
+    function resetUI() {
+        document.querySelector('.upload-area').style.display = 'block';
+        loading.style.display = 'none';
+    }
+
+    let protocolChartInstance = null;
+
+    function updateDashboard(data) {
+        loading.style.display = 'none';
+        dashboard.style.display = 'grid';
+        uploadCard.style.display = 'none'; // Ensure upload is hidden when viewing report
+
+        // Update Stats
+        document.getElementById('packetCount').textContent = data.packet_count.toLocaleString();
+        document.getElementById('maliciousCount').textContent = data.malicious_count;
+
+        // Update Tables
+        updateTable('srcIpTable', data.src_ips);
+        updateTable('dstIpTable', data.dst_ips);
+
+        // Update Alerts
+        const alertsFeed = document.getElementById('alertsFeed');
+        alertsFeed.innerHTML = '';
+        if (data.malicious_activity.length === 0) {
+            alertsFeed.innerHTML = '<p style="color: var(--success-color)">No threats detected.</p>';
+        } else {
+            data.malicious_activity.forEach(alert => {
+                const div = document.createElement('div');
+                div.className = 'alert';
+                div.innerHTML = `
+                    <div class="alert-header">
+                        <div class="alert-title">${alert.type}</div>
+                        <div class="alert-time">${alert.timestamp}</div>
+                    </div>
+                    <div class="alert-details">
+                        <p><strong>Source:</strong> ${alert.src_ip}:${alert.port} &rarr; <strong>Dest:</strong> ${alert.dst_ip}</p>
+                        <p>${alert.details}</p>
+                        ${alert.payload !== 'N/A' ? `<div class="payload-preview"><code>${alert.payload}</code></div>` : ''}
+                    </div>
+                `;
+                alertsFeed.appendChild(div);
+            });
+        }
+
+        // Update Chart
+        const ctx = document.getElementById('protocolChart').getContext('2d');
+
+        if (protocolChartInstance) {
+            protocolChartInstance.destroy();
+        }
+
+        protocolChartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(data.protocols),
+                datasets: [{
+                    data: Object.values(data.protocols),
+                    backgroundColor: [
+                        '#38bdf8', '#818cf8', '#c084fc', '#f472b6', '#fb7185'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: { color: '#94a3b8' }
+                    }
+                }
+            }
+        });
+    }
+
+    function updateTable(tableId, data) {
+        const tbody = document.querySelector(`#${tableId} tbody`);
+        tbody.innerHTML = '';
+        Object.entries(data).forEach(([ip, count]) => {
+            const row = `<tr><td>${ip}</td><td>${count}</td></tr>`;
+            tbody.innerHTML += row;
+        });
+    }
+</script>
+{% endblock %}

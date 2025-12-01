@@ -1,0 +1,4 @@
+flask
+pyshark
+flask-sqlalchemy
+flask-cors

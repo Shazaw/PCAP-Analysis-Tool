@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}History{% endblock %}
+{% block nav_history %}active{% endblock %}
+
+{% block content %}
+<div class="container">
+    <header>
+        <h1>Scan History</h1>
+        <p class="subtitle">Review past network analysis reports</p>
+    </header>
+
+    <div class="card">
+        <table id="historyTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Filename</th>
+                    <th>Date</th>
+                    <th>Packets</th>
+                    <th>Threats</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Populated by JS -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        fetch('/history')
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.querySelector('#historyTable tbody');
+                tbody.innerHTML = '';
+                data.forEach(scan => {
+                    const row = `
+                        <tr>
+                            <td>#${scan.id}</td>
+                            <td>${scan.filename}</td>
+                            <td>${scan.timestamp}</td>
+                            <td>${scan.packet_count}</td>
+                            <td><span style="color: ${scan.malicious_count > 0 ? 'var(--danger-color)' : 'var(--success-color)'}">${scan.malicious_count}</span></td>
+                            <td>
+                                <a href="/?report=${scan.id}" class="btn-sm">View Report</a>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+            });
+    });
+</script>
+{% endblock %}
