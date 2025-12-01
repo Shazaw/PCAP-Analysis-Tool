@@ -5,12 +5,46 @@ A modern, full-stack network packet analysis tool that provides real-time threat
 
 ## Screenshots
 
+### Dashboard View
+The main dashboard provides a comprehensive overview of network traffic analysis with interactive visualizations and real-time threat detection.
 
-![Dashboard - Protocol distribution and security alerts overview](screenshots/dashboard.png)
-<!-- slide -->
-![Packet Viewer - Detailed packet inspection with MITRE ATT&CK mapping and hex/ASCII dumps](screenshots/packet-viewer.png)
-<!-- slide -->
-![History - Previous scan tracking and analysis history](screenshots/history.png)
+![NetGuard Dashboard](screenshots/dashboard.png)
+
+**Key features shown:**
+- Protocol distribution pie chart with detailed breakdown
+- Security alerts panel with severity indicators (HIGH, MEDIUM, LOW)
+- Encrypted traffic detection with packet counts
+- Port scan detection with scanned port listings
+- Top source and destination IP addresses
+
+---
+
+### Packet Viewer
+Deep packet inspection modal for detailed analysis of security alerts and suspicious network activity.
+
+![Packet Details Modal](screenshots/packet-viewer.png)
+
+**Key features shown:**
+- Complete packet metadata (protocol, ports, timestamps)
+- MITRE ATT&CK framework mapping (tactics and techniques)
+- Risk scoring and severity classification
+- Collapsible alert descriptions
+- Hex and ASCII dump views with copy-to-clipboard functionality
+
+---
+
+### Scan History
+Track and review previous PCAP file analyses with complete historical records.
+
+![Scan History View](screenshots/history.png)
+
+**Key features shown:**
+- Chronological list of all scans
+- Filename, date, packet count, and threat count
+- Quick access to detailed reports
+- Clean, searchable interface
+
+---
 
 ## Features
 
