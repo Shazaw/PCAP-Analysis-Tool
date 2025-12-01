@@ -5,14 +5,14 @@ A modern, full-stack network packet analysis tool that provides real-time threat
 
 ## Screenshots
 
-````carousel
+
 [Dashboard - Protocol distribution and security alerts overview]
 <img width="1600" height="803" alt="image" src="https://github.com/user-attachments/assets/e1a973f3-8d0d-44f6-b7b2-d2f49e3246b8" />
 
 ![Packet Viewer - Detailed packet inspection with MITRE ATT&CK mapping and hex/ASCII dumps](screenshots/packet-viewer.png)
 <!-- slide -->
 ![History - Previous scan tracking and analysis history](screenshots/history.png)
-````
+
 ## Features
 
 ### Network Analysis
