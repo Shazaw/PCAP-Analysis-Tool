@@ -2,6 +2,16 @@
 
 A modern, full-stack network packet analysis tool that provides real-time threat detection and visualization for network security monitoring. NetGuard analyzes PCAP files to identify malicious activity, suspicious patterns, and security threats with an intuitive dashboard interface.
 
+
+## Screenshots
+
+````carousel
+![Dashboard - Protocol distribution and security alerts overview](screenshots/dashboard.png)
+<!-- slide -->
+![Packet Viewer - Detailed packet inspection with MITRE ATT&CK mapping and hex/ASCII dumps](screenshots/packet-viewer.png)
+<!-- slide -->
+![History - Previous scan tracking and analysis history](screenshots/history.png)
+````
 ## Features
 
 ### Network Analysis
@@ -158,6 +168,7 @@ The frontend will be available at `http://localhost:5173` (or the port Vite assi
 Responsi/
 ├── app.py                  # Flask backend application
 ├── requirements.txt        # Python dependencies
+├── screenshots/            # Screenshots for README
 ├── utils/
 │   └── analysis.py        # PCAP analysis logic
 ├── uploads/               # Uploaded PCAP files
